@@ -1,0 +1,38 @@
+steps:
+  - label: ":debian: Build"
+    branches: "!installer/*"
+    env:
+      DIST: stretch
+      OPX_RELEASE: unstable
+    command: |
+      if [[ -n "$BUILDKITE_TAG" ]]; then
+        version_tag="${BUILDKITE_TAG##*/}"
+      else
+        version_tag="$(cat VERSION)~git$(date +%Y%m%d).$(git rev-parse --short HEAD)"
+      fi
+      UPSTREAM="${version_tag%%-*}"
+      debian_with_opx="${version_tag##*-}"
+      DEBIAN="${debian_with_opx%opx*}"
+      OPX="${debian_with_opx#*opx}"
+
+      rm -rf ../*.deb ../*.changes "../linux-${UPSTREAM}"
+      dbp --dist "$DIST" --release "$OPX_RELEASE" rm
+
+      echo "+++ Building OPX update $OPX of the Debian release $DEBIAN of the Linux kernel version $UPSTREAM with full version $version_tag"
+      dbp --dist "$DIST" --release "$OPX_RELEASE" shell -c \
+        "UPSTREAM=$UPSTREAM DEBIAN=$DEBIAN OPX=$OPX ./${BUILDKITE_PIPELINE_SLUG}/build.bash"
+
+      echo "--- Uploading artifacts"
+      cd ..
+      buildkite-agent artifact upload "./*.changes;./*.deb"
+  - wait:
+  - label: ":s3: Publish"
+    branches: "master debian/*"
+    agents: {queue: aptly}
+    concurrency: 1
+    concurrency_group: "deb.openswitch.net"
+    plugins:
+      opx-infra/aptly-publish#v0.1.2:
+        download: .
+        slug: false
+        distribution: stretch
