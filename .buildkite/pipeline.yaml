@@ -2,7 +2,7 @@ steps:
   - label: ":debian: Build"
     branches: "!installer/*"
     agents:
-      queue: "docker"
+      queue: "xl"
     env:
       DIST: stretch
       OPX_RELEASE: unstable
@@ -32,12 +32,13 @@ steps:
       buildkite-agent artifact upload "pool/*"
   - wait:
   - label: ":s3: Publish"
-    branches: "master debian/*"
+    branches: "debian/*"
     agents: {queue: aptly}
     concurrency: 1
     concurrency_group: "deb.openswitch.net"
     plugins:
-      opx-infra/aptly-publish#v0.1.2:
+      opx-infra/aptly-publish#v0.1.4:
         download: pool
         slug: false
         distribution: stretch
+        unstable: true
