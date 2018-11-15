@@ -1,6 +1,8 @@
 steps:
   - label: ":debian: Build"
     branches: "!installer/*"
+    agents:
+      queue: "docker"
     env:
       DIST: stretch
       OPX_RELEASE: unstable
