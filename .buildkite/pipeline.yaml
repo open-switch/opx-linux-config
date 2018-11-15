@@ -17,7 +17,8 @@ steps:
       DEBIAN="${debian_with_opx%opx*}"
       OPX="${debian_with_opx#*opx}"
 
-      rm -rf ../*.deb ../*.changes "../linux-${UPSTREAM}"
+      cd ..
+      rm -rf ./*.deb ./*.changes "./linux-${UPSTREAM}"
       dbp --dist "$DIST" --release "$OPX_RELEASE" rm
 
       echo "+++ Building OPX update $OPX of the Debian release $DEBIAN of the Linux kernel version $UPSTREAM with full version $version_tag"
@@ -25,7 +26,6 @@ steps:
         "ls -l; ls -l ..; UPSTREAM=$UPSTREAM DEBIAN=$DEBIAN OPX=$OPX ./${BUILDKITE_PIPELINE_SLUG}/build.bash"
 
       echo "--- Uploading artifacts"
-      cd ..
       rm -rf pool/
       mkdir -p pool/
       mv -t pool/ ./*.changes ./*.deb
