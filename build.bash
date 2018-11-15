@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-#set -x
+set -x
 
 work="$(dirname "$0")"
 
@@ -19,7 +19,6 @@ sudo apt update
 sudo apt-get build-dep -y "linux=${UPSTREAM}-${DEBIAN}"
 apt-get source "linux=${UPSTREAM}-${DEBIAN}"
 
-echo cp "${work}/${UPSTREAM}-${DEBIAN}.config" "linux-${UPSTREAM}/.config"
 cp "${work}/${UPSTREAM}-${DEBIAN}.config" "linux-${UPSTREAM}/.config"
 
 env -u ARCH make -C "linux-${UPSTREAM}" "-j$PARALLELISM" bindeb-pkg \

@@ -24,7 +24,10 @@ steps:
 
       echo "--- Uploading artifacts"
       cd ..
-      buildkite-agent artifact upload "./*.changes;./*.deb"
+      rm -rf pool/
+      mkdir -p pool/
+      mv -t pool/ ./*.changes ./*.deb
+      buildkite-agent artifact upload "pool/*"
   - wait:
   - label: ":s3: Publish"
     branches: "master debian/*"
@@ -33,6 +36,6 @@ steps:
     concurrency_group: "deb.openswitch.net"
     plugins:
       opx-infra/aptly-publish#v0.1.2:
-        download: .
+        download: pool
         slug: false
         distribution: stretch
