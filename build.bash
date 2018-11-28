@@ -2,7 +2,7 @@
 set -euo pipefail
 set -x
 
-work="$(dirname "$0")"
+work="$(readlink -f "$(dirname "$0")")"
 
 version="$(cat "$work/VERSION")"
 debian_with_opx="${version##*-}"
@@ -14,13 +14,22 @@ debian_with_opx="${version##*-}"
 
 # Enable source packages
 sudo sed -i 's/deb \(.*\)/&\ndeb-src \1/' /etc/apt/sources.list
+if [[ -e /etc/apt/sources.list.d/20extra.list ]]; then
+  sudo sed -i 's/deb \(.*\)/&\ndeb-src \1/' /etc/apt/sources.list.d/20extra.list
+fi
 
 sudo apt update
 sudo apt-get build-dep -y "linux=${UPSTREAM}-${DEBIAN}"
 apt-get source "linux=${UPSTREAM}-${DEBIAN}"
 
-cp "${work}/${UPSTREAM}-${DEBIAN}.config" "linux-${UPSTREAM}/.config"
+cd "linux-${UPSTREAM}"
+fakeroot make -f debian/rules.gen "setup_${ARCH}_none_${ARCH}"
+cp "${work}/${UPSTREAM}-${DEBIAN}.config" "debian/build/build_${ARCH}_none_${ARCH}/.config"
+sed -i "s,${UPSTREAM}-${DEBIAN},${UPSTREAM}-${DEBIAN}opx${OPX}," debian/changelog
 
-env -u ARCH make -C "linux-${UPSTREAM}" "-j$PARALLELISM" bindeb-pkg \
-  LOCALVERSION=-opx \
-  KDEB_PKGVERSION="${UPSTREAM}-${DEBIAN}opx${OPX}"
+echo "--- Kernel image build"
+time DEBIAN_KERNEL_USE_CCACHE=true DEBIAN_KERNEL_JOBS=$PARALLELISM \
+  fakeroot make  "-j$PARALLELISM" -f debian/rules.gen "binary-arch_${ARCH}_none_${ARCH}"
+
+echo "--- Kernel headers common build"
+fakeroot make  "-j$PARALLELISM" -f debian/rules.gen "binary-arch_${ARCH}_none_real"
