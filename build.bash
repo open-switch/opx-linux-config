@@ -19,6 +19,7 @@ if [[ -e /etc/apt/sources.list.d/20extra.list ]]; then
 fi
 
 sudo apt update
+sudo apt-get install -y cpio
 sudo apt-get build-dep -y "linux=${UPSTREAM}-${DEBIAN}"
 apt-get source "linux=${UPSTREAM}-${DEBIAN}"
 
@@ -29,7 +30,7 @@ sed -i "s,${UPSTREAM}-${DEBIAN},${UPSTREAM}-${DEBIAN}opx${OPX}," debian/changelo
 
 echo "--- Kernel image build"
 time DEBIAN_KERNEL_USE_CCACHE=true DEBIAN_KERNEL_JOBS=$PARALLELISM \
-  fakeroot make  "-j$PARALLELISM" -f debian/rules.gen "binary-arch_${ARCH}_none_${ARCH}"
+  fakeroot make "-j$PARALLELISM" -f debian/rules.gen "binary-arch_${ARCH}_none_${ARCH}"
 
 echo "--- Kernel headers common build"
-fakeroot make  "-j$PARALLELISM" -f debian/rules.gen "binary-arch_${ARCH}_none_real"
+fakeroot make "-j$PARALLELISM" -f debian/rules.gen binary-indep_none_real
